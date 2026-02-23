@@ -147,7 +147,7 @@ window.sleep = async function(ms) {
   app.get('/extract', async (req, res) => {
     const text = req.query.text;
     const schema = req.query.schema;
-    if (!text ||schema) {
+    if (!text || !schema) {
       return res.status(400).json({ error: 'Missing query parameter "text"' });
     }
     try {

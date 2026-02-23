@@ -1,5 +1,7 @@
 const { exec } = require('child_process');
 const puppeteer = require('puppeteer');
+const express = require('express');
+const app = express();
 
 async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -114,7 +116,7 @@ window.sleep = async function(ms) {
     return selectChatGptResponse();
   }, question);
   }
-  function jsonExtractor(text, schema, retry = 0){
+  function jsonExtractor(text, schema, retry = 3){
     const prompt = `from the following document, extract the data in the json format of ${schema}s. the text is as follows: 
     ${text}`;
 
@@ -128,16 +130,36 @@ window.sleep = async function(ms) {
     throw new Error("Could not extract json");
 }
 
-//   await sleep(2000);
+  app.get('/ask', async (req, res) => {
+    const question = req.query.q;
+    if (!question) {
+      return res.status(400).json({ error: 'Missing query parameter "q"' });
+    }
+    try {
+      const answer = await askChatGpt(question);
+      res.json({ question, answer });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
-//   console.log(await askChatGpt("Hello from the future!"));
 
-//   console.log(await askChatGpt("What is the capital of France?"));
+  app.get('/extract', async (req, res) => {
+    const text = req.query.text;
+    const schema = req.query.schema;
+    if (!text ||schema) {
+      return res.status(400).json({ error: 'Missing query parameter "text"' });
+    }
+    try {
+      const answer = await jsonExtractor(text, schema);
+      res.json({ text, answer });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
-
-  
-
-
-  
+  app.listen(3000, () => {
+    console.log('Server running on http://localhost:3000');
+    console.log('Usage: GET /ask?q=your+question');
+  });
 })();
-
